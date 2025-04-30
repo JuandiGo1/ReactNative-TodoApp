@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, FlatList, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import taskService from "../service/task_service";
 import {
   FAB,
   TextInput,
@@ -16,11 +17,25 @@ export default function TodoList() {
   const [dialogVisible, setDialogVisible] = useState(false);
   const [currentTask, setCurrentTask] = useState(null); // Estado para la tarea actual
 
-  const addItem = (name) => {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const tasks = await taskService.getTasks();
+        setData(tasks);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const addItem = async (name) => {
     const newItem = {
       id: data.length + 1,
       name
     };
+
+    await taskService.addTask(newItem); // Llama al servicio para agregar la tarea
     setData((prevData) => [...prevData, newItem]);
   };
 
