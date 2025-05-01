@@ -13,19 +13,19 @@ import {
 } from "react-native-paper";
 
 export default function TodoList() {
-  const [data, setData] = useState([{ id: 1, name: "Task 1" }]);
+  const [data, setData] = useState([{entry_id:1234345, data:{ id: 1, name: "Task 1" }}]);
   const [dialogVisible, setDialogVisible] = useState(false);
   const [currentTask, setCurrentTask] = useState(null); // Estado para la tarea actual
 
+  const fetchData = async () => {
+    try {
+      let tasks = await taskService.getTasks();
+      setData(tasks);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  };
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const tasks = await taskService.getTasks();
-        setData(tasks);
-      } catch (error) {
-        console.error("Error fetching tasks:", error);
-      }
-    };
     fetchData();
   }, []);
 
@@ -36,19 +36,27 @@ export default function TodoList() {
     };
 
     await taskService.addTask(newItem); // Llama al servicio para agregar la tarea
-    setData((prevData) => [...prevData, newItem]);
+    fetchData(); // Vuelve a obtener los datos después de agregar la tarea
+
   };
 
-  const editItem = (id, newName) => {
+  const editItem =  async (id, newName) => {
+    const updatedItem = data.find((item) => item.entry_id === id);
+    updatedItem.data.name = newName; // Actualiza el nombre de la tarea
+    await taskService.updateTask(updatedItem.data, updatedItem.entry_id); // Llama al servicio para actualizar la tarea
     setData((prevData) =>
       prevData.map((item) =>
-        item.id === id ? { ...item, name: newName } : item
+        item.entry_id === id ? { ...item, name: newName } : item
       )
     );
   };
 
   const deleteItem = (id) => {
-    const newData = data.filter((item) => item.id !== id);
+
+    taskService.deleteTask(id); // Llama al servicio para eliminar la tarea
+
+    // Actualiza el estado local después de eliminar la tarea
+    const newData = data.filter((item) => item.entry_id !== id);
     setData(() => [...newData]);
   };
 
@@ -59,7 +67,7 @@ export default function TodoList() {
 
   const renderItem = ({ item }) => (
     <View style={styles.item}>
-      <Text style={{ fontSize: 18, fontWeight: "bold" }}>{item.name}</Text>
+      <Text style={{ fontSize: 18, fontWeight: "bold" }}>{item.data.name}</Text>
       <View style={{ flexDirection: "row" }}>
         <IconButton
           icon="clipboard-edit-outline"
@@ -71,7 +79,7 @@ export default function TodoList() {
           icon="trash-can-outline"
           iconColor={"red"}
           size={20}
-          onPress={() => deleteItem(item.id)}
+          onPress={() => deleteItem(item.entry_id)}
         />
       </View>
     </View>
@@ -84,7 +92,7 @@ export default function TodoList() {
           <FlatList
             data={data}
             renderItem={renderItem}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(item) => item.entry_id.toString()}
             contentContainerStyle={{ padding: 16 }}
           />
           <FAB
@@ -128,7 +136,7 @@ const MyDialogWithForm = ({
 
   const handleEdit = () => {
     if (name.trim() && task) {
-      onEditItem(task.id, name);
+      onEditItem(task.entry_id, name);
       setName("");
       onClose();
     }
