@@ -17,10 +17,11 @@ const taskService = {
       console.log(rawData);
 
       const tasks = rawData.map((task) => {
-        const { id, name } = task.data;
+        const { entry_id, data } = task;
         return {
-          id: id,
-          name: name
+          entry_id: entry_id,
+          data: data
+
         };
       });
       console.log("getTasks response:", tasks);
@@ -55,6 +56,53 @@ const taskService = {
       }
     } catch (err) {
       console.error("addTask error:", err);
+      return null;
+    }
+  },
+
+  async updateTask(task, id) {
+    const url = `${BASE_URL}/${CONTRACT_KEY}/data/${TABLE}/update/${id}`;
+
+    try {
+      const res = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json; charset=UTF-8" },
+        body: JSON.stringify({
+          data: task
+        })
+      });
+
+      if (res.status === 200) {
+        console.log("Task updated success");
+      } else {
+        const text = await res.text();
+        console.error(`updateTask failed ${res.status}:`, text);
+        return null;
+      }
+    } catch (err) {
+      console.error("updateTask error:", err);
+      return null;
+    }
+  },
+
+  async deleteTask(taskId) {
+    const url = `${BASE_URL}/${CONTRACT_KEY}/data/${TABLE}/delete/${taskId}`;
+
+    try {
+      const res = await fetch(url, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json; charset=UTF-8" }
+      });
+
+      if (res.status === 200) {
+        console.log("Task deleted success");
+      } else {
+        const text = await res.text();
+        console.error(`deleteTask failed ${res.status}:`, text);
+        return null;
+      }
+    } catch (err) {
+      console.error("deleteTask error:", err);
       return null;
     }
   }
